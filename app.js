@@ -36,13 +36,15 @@ const translations = {
     btn_reset_config: "إعادة تعيين الافتراضي",
     search_placeholder: "ابحث برمز السهم أو الاسم...",
     sector_label: "القطاع: ",
-    news_sync_status: "تحديث تلقائي كل ساعة",
+    news_sync_status: "تحديث تلقائي كل دقيقة",
     tasi_label: "المؤشر العام (تاسي):",
     liquidity_label: "السيولة:",
     volume_label: "الحجم:",
     market_status_label: "حالة السوق:",
     market_open: "مفتوح",
     market_closed: "مغلق",
+    btn_annual: "سنوي",
+    btn_quarterly: "ربع سنوي",
     
     // Metric names and descriptions
     eps: { name: "ربحية السهم (EPS)", desc: "صافي أرباح الشركة مقسوماً على عدد الأسهم" },
@@ -52,6 +54,17 @@ const translations = {
     debtToAssets: { name: "الديون إلى الأصول", desc: "نسبة تمويل الأصول عبر الديون والقروض" },
     debtToEquity: { name: "الديون إلى حقوق الملكية", desc: "نسبة الاعتماد على الديون مقارنة برأس المال" },
     freeCashFlow: { name: "التدفق النقدي الحر", desc: "النقد المتبقي بعد تغطية النفقات التشغيلية والرأسمالية" },
+    
+    // Modal & YoY Headers
+    modal_eps_title: "التاريخ الخمس سنوي لربحية السهم (EPS)",
+    modal_netProfitMargin_title: "التاريخ الخمس سنوي لهامش صافي الربح",
+    modal_roe_title: "التاريخ الخمس سنوي للعائد على حقوق الملكية (ROE)",
+    modal_debtToAssets_title: "التاريخ الخمس سنوي لنسبة الديون إلى الأصول",
+    modal_debtToEquity_title: "التاريخ الخمس سنوي لنسبة الديون إلى حقوق الملكية",
+    modal_freeCashFlow_title: "التاريخ الخمس سنوي للتدفق النقدي الحر (FCF)",
+    th_year_modal: "السنة المالية",
+    th_val_modal: "القيمة",
+    th_change_modal: "نسبة النمو السنوي (YoY)",
     
     // Units
     unit_sar: "ريال",
@@ -95,13 +108,15 @@ const translations = {
     btn_reset_config: "Reset to Default",
     search_placeholder: "Search by symbol or name...",
     sector_label: "Sector: ",
-    news_sync_status: "Auto updates hourly",
+    news_sync_status: "Auto updates every minute",
     tasi_label: "TASI Index:",
     liquidity_label: "Liquidity:",
     volume_label: "Volume:",
     market_status_label: "Market Status:",
     market_open: "Open",
     market_closed: "Closed",
+    btn_annual: "Annual",
+    btn_quarterly: "Quarterly",
     
     // Metric names and descriptions
     eps: { name: "Earnings Per Share (EPS)", desc: "Company's net profit divided by outstanding shares" },
@@ -111,6 +126,17 @@ const translations = {
     debtToAssets: { name: "Debt to Assets", desc: "Percentage of assets financed by debt/loans" },
     debtToEquity: { name: "Debt to Equity", desc: "Financial leverage ratio comparing debt to equity" },
     freeCashFlow: { name: "Free Cash Flow (FCF)", desc: "Cash remaining after operating & capital expenditures" },
+    
+    // Modal & YoY Headers
+    modal_eps_title: "5-Year History for Earnings Per Share (EPS)",
+    modal_netProfitMargin_title: "5-Year History for Net Profit Margin",
+    modal_roe_title: "5-Year History for Return on Equity (ROE)",
+    modal_debtToAssets_title: "5-Year History for Debt to Assets",
+    modal_debtToEquity_title: "5-Year History for Debt to Equity",
+    modal_freeCashFlow_title: "5-Year History for Free Cash Flow (FCF)",
+    th_year_modal: "Financial Year",
+    th_val_modal: "Value",
+    th_change_modal: "YoY Growth Rate",
     
     // Units
     unit_sar: "SAR",
@@ -125,11 +151,13 @@ let currentLang = "ar";
 let currentCompanyId = "2222"; // default Aramco
 let metricsConfig = ["eps", "pe", "netProfitMargin", "roe", "debtToAssets", "debtToEquity", "freeCashFlow"];
 let activeTab = "dashboard";
+let historyGranularity = "annual"; // 'annual' or 'quarterly'
 let currentChart = null;
+let currentModalChart = null;
 
 // Simulated Timers (seconds)
-let priceTimerSeconds = 6 * 60 * 60; // 6 hours
-let newsTimerSeconds = 60 * 60; // 1 hour
+let priceTimerSeconds = 60; // 1 minute
+let newsTimerSeconds = 60; // 1 minute
 let newNewsAlertsCount = 0;
 
 // Initialize Web Application
@@ -138,7 +166,9 @@ window.addEventListener("DOMContentLoaded", () => {
   setupEventListeners();
   updateUI();
   startSimulationTimers();
-  triggerRandomLog("تم الاتصال بنجاح بخوادم هيئة السوق المالية وتداول السعودية.");
+  
+  // Initial price sync from Yahoo Finance
+  syncAllPricesFromYahoo();
 });
 
 // Load configuration from LocalStorage
@@ -168,6 +198,27 @@ function saveConfig() {
   localStorage.setItem("tplus_metrics_config", JSON.stringify(metricsConfig));
 }
 
+// Check Saudi stock exchange open/closed timings
+function getSaudiMarketStatus() {
+  // Saudi Arabia is AST (UTC + 3)
+  const now = new Date();
+  const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+  const saudiTime = new Date(utc + (3600000 * 3));
+  
+  const day = saudiTime.getDay(); // 0: Sunday, 1: Monday, ..., 6: Saturday
+  const hours = saudiTime.getHours();
+  const minutes = saudiTime.getMinutes();
+  
+  // Saudi Trading days are Sunday (0) to Thursday (4)
+  const isTradingDay = (day >= 0 && day <= 4);
+  
+  // Trading hours are 10:00 AM to 3:00 PM AST
+  const timeVal = hours * 100 + minutes;
+  const isTradingHours = (timeVal >= 1000 && timeVal < 1500);
+  
+  return (isTradingDay && isTradingHours) ? "OPEN" : "CLOSED";
+}
+
 // Setup all page events
 function setupEventListeners() {
   // Lang Toggle Button
@@ -181,7 +232,7 @@ function setupEventListeners() {
     
     // Re-render chart if visible
     if (activeTab === "history5") {
-      renderHistoryChart();
+      renderHistorySection();
     }
   });
 
@@ -242,7 +293,7 @@ function setupEventListeners() {
 
   // Manual integration force update button
   document.getElementById("sync-now-btn").addEventListener("click", () => {
-    triggerManualSync();
+    syncAllPricesFromYahoo();
   });
 
   // Chart Metric Toggles
@@ -250,7 +301,17 @@ function setupEventListeners() {
     btn.addEventListener("click", (e) => {
       document.querySelectorAll(".toggle-btn").forEach(b => b.classList.remove("active"));
       e.currentTarget.classList.add("active");
-      renderHistoryChart();
+      renderHistorySection();
+    });
+  });
+
+  // Granularity toggles (Annual vs Quarterly)
+  document.querySelectorAll(".toggle-btn-gran").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      document.querySelectorAll(".toggle-btn-gran").forEach(b => b.classList.remove("active"));
+      e.currentTarget.classList.add("active");
+      historyGranularity = e.currentTarget.getAttribute("data-granularity");
+      renderHistorySection();
     });
   });
 
@@ -283,6 +344,14 @@ function setupEventListeners() {
     );
     switchTab("dashboard");
   });
+
+  // Interactive Metrics Modal Close
+  document.getElementById("modal-close-btn").addEventListener("click", closeMetricModal);
+  document.getElementById("metric-modal").addEventListener("click", (e) => {
+    if (e.target.id === "metric-modal") {
+      closeMetricModal();
+    }
+  });
 }
 
 // Switch between dashboard views/tabs
@@ -306,7 +375,7 @@ function switchTab(tabName) {
   
   // Specific view actions
   if (tabName === "history5") {
-    renderHistoryChart();
+    renderHistorySection();
   }
   
   if (tabName === "news") {
@@ -391,13 +460,20 @@ function updateUI() {
   
   const dict = translations[currentLang];
   
+  // Update TASI Status dynamically
+  const marketStatus = getSaudiMarketStatus();
+  marketSummary.tasi.status = marketStatus;
+  
   // Update page-wide static translations
   document.getElementById("lang-btn").querySelector("span").textContent = currentLang === "ar" ? "English" : "العربية";
   document.getElementById("tasi-title").textContent = dict.tasi_label;
   document.getElementById("tasi-liquidity-label").textContent = dict.liquidity_label;
   document.getElementById("tasi-volume-label").textContent = dict.volume_label;
   document.getElementById("tasi-status-label").textContent = dict.market_status_label;
-  document.getElementById("tasi-status").textContent = marketSummary.tasi.status === "OPEN" ? dict.market_open : dict.market_closed;
+  
+  const statusEl = document.getElementById("tasi-status");
+  statusEl.textContent = marketStatus === "OPEN" ? dict.market_open : dict.market_closed;
+  statusEl.className = `market-status ${marketStatus === "OPEN" ? 'open' : 'closed'}`;
   
   // Translate search placeholder
   document.getElementById("stock-search").placeholder = dict.search_placeholder;
@@ -432,7 +508,7 @@ function updateUI() {
 
   // Tab views renderers
   renderMetricsGrid(stock, dict);
-  renderHistoryTable(stock, dict);
+  renderHistorySection();
   renderDividendsSection(stock, dict);
   renderCompanyNewsList(stock);
   renderCustomizeSwitches(dict);
@@ -459,6 +535,11 @@ function renderMetricsGrid(stock, dict) {
     const card = document.createElement("div");
     card.className = "metric-card";
     
+    // Attach modal open click listener (excluding P/E ratio)
+    if (metricKey !== "pe") {
+      card.addEventListener("click", () => openMetricModal(metricKey));
+    }
+    
     // Header
     const header = document.createElement("div");
     header.className = "metric-card-header";
@@ -466,15 +547,31 @@ function renderMetricsGrid(stock, dict) {
     const nameCont = document.createElement("div");
     nameCont.className = "metric-name-container";
     
+    // Title row with interactive spark trigger icon
+    const titleRow = document.createElement("div");
+    titleRow.style.display = "flex";
+    titleRow.style.alignItems = "center";
+    titleRow.style.gap = "8px";
+    
     const title = document.createElement("span");
     title.className = "metric-card-title";
     title.textContent = dict[metricKey].name;
+    titleRow.appendChild(title);
+    
+    // Clickable icon visual cue for modal
+    if (metricKey !== "pe") {
+      const triggerIcon = document.createElement("span");
+      triggerIcon.className = "metric-info-trigger";
+      triggerIcon.title = currentLang === "ar" ? "عرض السجل التاريخي والرسوم البيانية" : "Show historical chart & statements";
+      triggerIcon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;"><path d="M3 3v18h18"></path><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"></path></svg>`;
+      titleRow.appendChild(triggerIcon);
+    }
     
     const subtitle = document.createElement("span");
     subtitle.className = "metric-card-subtitle";
     subtitle.textContent = dict[metricKey].desc;
     
-    nameCont.appendChild(title);
+    nameCont.appendChild(titleRow);
     nameCont.appendChild(subtitle);
     
     const icon = document.createElement("div");
@@ -589,11 +686,10 @@ function renderMetricsGrid(stock, dict) {
     const sparkline = document.createElement("div");
     sparkline.className = "sparkline-container";
     
-    // Generate simulated heights for 5 intervals (years)
     let mockTrend = [45, 60, 52, 70, 90];
     if (metricKey === "pe") mockTrend = [80, 75, 95, 65, 50];
     if (metricKey === "debtToAssets") mockTrend = [20, 25, 23, 21, 18];
-    if (stock.symbol === "2082" && metricKey === "freeCashFlow") mockTrend = [20, 10, -5, -20, -35]; // Acwa power negative cash trends
+    if (stock.symbol === "2082" && metricKey === "freeCashFlow") mockTrend = [20, 10, -5, -20, -35];
     
     mockTrend.forEach(heightPercent => {
       const bar = document.createElement("div");
@@ -661,6 +757,26 @@ function getMetricIconSvg(key) {
   return icons[key] || "";
 }
 
+// Router to render history section based on active toggle granularity (Annual / Quarterly)
+function renderHistorySection() {
+  const stock = stockData[currentCompanyId];
+  if (!stock) return;
+  
+  const dict = translations[currentLang];
+  
+  if (historyGranularity === "annual") {
+    // Render Annual Table
+    renderHistoryTable(stock, dict);
+    // Draw Annual Chart
+    renderHistoryChart(stock);
+  } else {
+    // Render Quarterly Table
+    renderQuarterlyHistoryTable(stock, dict);
+    // Draw Quarterly Chart
+    renderQuarterlyHistoryChart(stock);
+  }
+}
+
 // Render the 5-year financials table view
 function renderHistoryTable(stock, dict) {
   const table = document.getElementById("history-table");
@@ -709,6 +825,301 @@ function renderHistoryTable(stock, dict) {
   });
 }
 
+// Render the Quarterly financials table view (last 8 quarters)
+function renderQuarterlyHistoryTable(stock, dict) {
+  const table = document.getElementById("history-table");
+  const thead = table.querySelector("thead");
+  const tbody = table.querySelector("tbody");
+  
+  thead.innerHTML = "";
+  tbody.innerHTML = "";
+  
+  // Headers row
+  const hRow = document.createElement("tr");
+  const thLabel = document.createElement("th");
+  thLabel.textContent = currentLang === "ar" ? "البند المالي" : "Financial Metric";
+  hRow.appendChild(thLabel);
+  
+  // Periods
+  stock.quarterlyFinancials.quarters.forEach(q => {
+    const th = document.createElement("th");
+    // Translate Q1 2024 to الربع الأول 2024 if Arabic
+    th.textContent = translateQuarter(q);
+    hRow.appendChild(th);
+  });
+  thead.appendChild(hRow);
+  
+  // Metric mappings
+  const metricsMap = [
+    { key: "revenues", nameAr: "الإيرادات (مليار ر.س)", nameEn: "Revenues (Billion SAR)" },
+    { key: "netIncome", nameAr: "صافي الدخل (مليار ر.س)", nameEn: "Net Income (Billion SAR)" },
+    { key: "eps", nameAr: "ربحية السهم (ر.س)", nameEn: "EPS (SAR)" }
+  ];
+  
+  metricsMap.forEach(item => {
+    const row = document.createElement("tr");
+    const tdLabel = document.createElement("td");
+    tdLabel.textContent = currentLang === "ar" ? item.nameAr : item.nameEn;
+    row.appendChild(tdLabel);
+    
+    const values = stock.quarterlyFinancials[item.key];
+    values.forEach(val => {
+      const td = document.createElement("td");
+      td.textContent = val.toLocaleString(currentLang === 'ar' ? 'ar-EG' : 'en-US', {minimumFractionDigits: 2});
+      row.appendChild(td);
+    });
+    
+    tbody.appendChild(row);
+  });
+}
+
+// Helper to translate quarter labels on the fly
+function translateQuarter(q) {
+  if (currentLang !== "ar") return q;
+  return q.replace("Q1", "الربع الأول")
+          .replace("Q2", "الربع الثاني")
+          .replace("Q3", "الربع الثالث")
+          .replace("Q4", "الربع الرابع");
+}
+
+// Draw Annual Chart.js graphs
+function renderHistoryChart(stock) {
+  const ctx = document.getElementById("financialHistoryChart").getContext("2d");
+  const years = stock.history5Years.years;
+  
+  const activeBtn = document.querySelector(".chart-toggles .toggle-btn.active");
+  const selectedMetric = activeBtn.getAttribute("data-chart-metric");
+  
+  if (currentChart) {
+    currentChart.destroy();
+  }
+  
+  let chartData = {};
+  
+  if (selectedMetric === "revenues") {
+    chartData = {
+      labels: years,
+      datasets: [{
+        label: currentLang === "ar" ? "الإيرادات السنوية (مليار ر.س)" : "Annual Revenues (Billion SAR)",
+        data: stock.history5Years.revenues,
+        backgroundColor: "rgba(4, 120, 87, 0.2)",
+        borderColor: "#047857",
+        borderWidth: 2,
+        borderRadius: 6,
+        barThickness: 32
+      }]
+    };
+    
+    currentChart = new Chart(ctx, {
+      type: 'bar',
+      data: chartData,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: { beginAtZero: true, grid: { color: "#F1F5F9" } },
+          x: { grid: { display: false } }
+        },
+        plugins: {
+          legend: { labels: { font: { family: currentLang === "ar" ? "Tajawal" : "Inter" } } }
+        }
+      }
+    });
+    
+  } else if (selectedMetric === "netIncome") {
+    chartData = {
+      labels: years,
+      datasets: [{
+        label: currentLang === "ar" ? "صافي الدخل السنوي (مليار ر.س)" : "Annual Net Income (Billion SAR)",
+        data: stock.history5Years.netIncome,
+        backgroundColor: "rgba(15, 23, 42, 0.05)",
+        borderColor: "#0F172A",
+        borderWidth: 3,
+        fill: true,
+        tension: 0.35,
+        pointBackgroundColor: "#047857",
+        pointBorderWidth: 2,
+        pointRadius: 6
+      }]
+    };
+    
+    currentChart = new Chart(ctx, {
+      type: 'line',
+      data: chartData,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: { beginAtZero: true, grid: { color: "#F1F5F9" } },
+          x: { grid: { display: false } }
+        },
+        plugins: {
+          legend: { labels: { font: { family: currentLang === "ar" ? "Tajawal" : "Inter" } } }
+        }
+      }
+    });
+    
+  } else if (selectedMetric === "assets_liab") {
+    chartData = {
+      labels: years,
+      datasets: [
+        {
+          label: currentLang === "ar" ? "إجمالي الأصول (مليار ر.س)" : "Total Assets (Billion SAR)",
+          data: stock.history5Years.assets,
+          backgroundColor: "#047857",
+          borderColor: "#047857",
+          borderWidth: 1,
+          borderRadius: 4
+        },
+        {
+          label: currentLang === "ar" ? "إجمالي الالتزامات (مليار ر.س)" : "Total Liabilities (Billion SAR)",
+          data: stock.history5Years.liabilities,
+          backgroundColor: "#EF4444",
+          borderColor: "#EF4444",
+          borderWidth: 1,
+          borderRadius: 4
+        }
+      ]
+    };
+    
+    currentChart = new Chart(ctx, {
+      type: 'bar',
+      data: chartData,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: { beginAtZero: true, grid: { color: "#F1F5F9" } },
+          x: { grid: { display: false } }
+        },
+        plugins: {
+          legend: { labels: { font: { family: currentLang === "ar" ? "Tajawal" : "Inter" } } }
+        }
+      }
+    });
+  }
+}
+
+// Draw Quarterly Chart.js graphs
+function renderQuarterlyHistoryChart(stock) {
+  const ctx = document.getElementById("financialHistoryChart").getContext("2d");
+  const rawQuarters = stock.quarterlyFinancials.quarters;
+  const quarters = rawQuarters.map(q => translateQuarter(q));
+  
+  const activeBtn = document.querySelector(".chart-toggles .toggle-btn.active");
+  const selectedMetric = activeBtn.getAttribute("data-chart-metric");
+  
+  if (currentChart) {
+    currentChart.destroy();
+  }
+  
+  let chartData = {};
+  
+  if (selectedMetric === "revenues") {
+    chartData = {
+      labels: quarters,
+      datasets: [{
+        label: currentLang === "ar" ? "الإيرادات الربع سنوية (مليار ر.س)" : "Quarterly Revenues (Billion SAR)",
+        data: stock.quarterlyFinancials.revenues,
+        backgroundColor: "rgba(4, 120, 87, 0.2)",
+        borderColor: "#047857",
+        borderWidth: 2,
+        borderRadius: 4,
+        barThickness: 24
+      }]
+    };
+    
+    currentChart = new Chart(ctx, {
+      type: 'bar',
+      data: chartData,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: { beginAtZero: true, grid: { color: "#F1F5F9" } },
+          x: { grid: { display: false } }
+        },
+        plugins: {
+          legend: { labels: { font: { family: currentLang === "ar" ? "Tajawal" : "Inter" } } }
+        }
+      }
+    });
+    
+  } else if (selectedMetric === "netIncome") {
+    chartData = {
+      labels: quarters,
+      datasets: [{
+        label: currentLang === "ar" ? "صافي الدخل الربع سنوي (مليار ر.س)" : "Quarterly Net Income (Billion SAR)",
+        data: stock.quarterlyFinancials.netIncome,
+        backgroundColor: "rgba(30, 58, 138, 0.05)",
+        borderColor: "#1E3A8A",
+        borderWidth: 3,
+        fill: true,
+        tension: 0.3,
+        pointBackgroundColor: "#047857",
+        pointBorderWidth: 2,
+        pointRadius: 5
+      }]
+    };
+    
+    currentChart = new Chart(ctx, {
+      type: 'line',
+      data: chartData,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: { beginAtZero: true, grid: { color: "#F1F5F9" } },
+          x: { grid: { display: false } }
+        },
+        plugins: {
+          legend: { labels: { font: { family: currentLang === "ar" ? "Tajawal" : "Inter" } } }
+        }
+      }
+    });
+    
+  } else if (selectedMetric === "assets_liab") {
+    // Fallback comparison for quarters: revenues vs netIncome
+    chartData = {
+      labels: quarters,
+      datasets: [
+        {
+          label: currentLang === "ar" ? "الإيرادات الربعية (مليار)" : "Quarterly Revenues (B)",
+          data: stock.quarterlyFinancials.revenues,
+          backgroundColor: "#047857",
+          borderColor: "#047857",
+          borderWidth: 1,
+          borderRadius: 4
+        },
+        {
+          label: currentLang === "ar" ? "صافي الدخل الربعي (مليار)" : "Quarterly Net Income (B)",
+          data: stock.quarterlyFinancials.netIncome,
+          backgroundColor: "#1E3A8A",
+          borderColor: "#1E3A8A",
+          borderWidth: 1,
+          borderRadius: 4
+        }
+      ]
+    };
+    
+    currentChart = new Chart(ctx, {
+      type: 'bar',
+      data: chartData,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: { beginAtZero: true, grid: { color: "#F1F5F9" } },
+          x: { grid: { display: false } }
+        },
+        plugins: {
+          legend: { labels: { font: { family: currentLang === "ar" ? "Tajawal" : "Inter" } } }
+        }
+      }
+    });
+  }
+}
+
 // Render Cash Dividends panel and quarterly tables
 function renderDividendsSection(stock, dict) {
   document.getElementById("div-yield-val").textContent = `${stock.dividends.dividendYield}%`;
@@ -721,7 +1132,7 @@ function renderDividendsSection(stock, dict) {
     const tr = document.createElement("tr");
     
     const tdPeriod = document.createElement("td");
-    tdPeriod.textContent = item.period; // quarterly names remain standard
+    tdPeriod.textContent = item.period;
     
     const tdAmt = document.createElement("td");
     tdAmt.textContent = `${item.amount.toLocaleString(currentLang === 'ar' ? 'ar-EG' : 'en-US', {minimumFractionDigits: 2})} ${dict.unit_sar}`;
@@ -757,129 +1168,7 @@ function renderDividendsSection(stock, dict) {
   });
 }
 
-// Render dynamic visual Chart.js graphs
-function renderHistoryChart() {
-  const stock = stockData[currentCompanyId];
-  if (!stock) return;
-  
-  const ctx = document.getElementById("financialHistoryChart").getContext("2d");
-  const years = stock.history5Years.years;
-  
-  // Check active chart metric filter selected
-  const activeBtn = document.querySelector(".chart-toggles .toggle-btn.active");
-  const selectedMetric = activeBtn.getAttribute("data-chart-metric");
-  
-  if (currentChart) {
-    currentChart.destroy();
-  }
-  
-  let chartData = {};
-  
-  if (selectedMetric === "revenues") {
-    chartData = {
-      labels: years,
-      datasets: [{
-        label: currentLang === "ar" ? "الإيرادات (مليار ر.س)" : "Revenues (Billion SAR)",
-        data: stock.history5Years.revenues,
-        backgroundColor: "rgba(0, 135, 90, 0.2)",
-        borderColor: "#00875A",
-        borderWidth: 2,
-        borderRadius: 6,
-        barThickness: 32
-      }]
-    };
-    
-    currentChart = new Chart(ctx, {
-      type: 'bar',
-      data: chartData,
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          y: { beginAtZero: true, grid: { color: "#F1F5F9" } },
-          x: { grid: { display: false } }
-        },
-        plugins: {
-          legend: { labels: { font: { family: currentLang === "ar" ? "Tajawal" : "Inter" } } }
-        }
-      }
-    });
-    
-  } else if (selectedMetric === "netIncome") {
-    chartData = {
-      labels: years,
-      datasets: [{
-        label: currentLang === "ar" ? "صافي الدخل (مليار ر.س)" : "Net Income (Billion SAR)",
-        data: stock.history5Years.netIncome,
-        backgroundColor: "rgba(30, 41, 59, 0.1)",
-        borderColor: "#0F172A",
-        borderWidth: 3,
-        fill: true,
-        tension: 0.35,
-        pointBackgroundColor: "#00875A",
-        pointBorderWidth: 2,
-        pointRadius: 6
-      }]
-    };
-    
-    currentChart = new Chart(ctx, {
-      type: 'line',
-      data: chartData,
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          y: { beginAtZero: true, grid: { color: "#F1F5F9" } },
-          x: { grid: { display: false } }
-        },
-        plugins: {
-          legend: { labels: { font: { family: currentLang === "ar" ? "Tajawal" : "Inter" } } }
-        }
-      }
-    });
-    
-  } else if (selectedMetric === "assets_liab") {
-    chartData = {
-      labels: years,
-      datasets: [
-        {
-          label: currentLang === "ar" ? "إجمالي الأصول (مليار ر.س)" : "Total Assets (Billion SAR)",
-          data: stock.history5Years.assets,
-          backgroundColor: "#00875A",
-          borderColor: "#00875A",
-          borderWidth: 1,
-          borderRadius: 4
-        },
-        {
-          label: currentLang === "ar" ? "إجمالي الالتزامات (مليار ر.س)" : "Total Liabilities (Billion SAR)",
-          data: stock.history5Years.liabilities,
-          backgroundColor: "#EF4444",
-          borderColor: "#EF4444",
-          borderWidth: 1,
-          borderRadius: 4
-        }
-      ]
-    };
-    
-    currentChart = new Chart(ctx, {
-      type: 'bar',
-      data: chartData,
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          y: { beginAtZero: true, grid: { color: "#F1F5F9" } },
-          x: { grid: { display: false } }
-        },
-        plugins: {
-          legend: { labels: { font: { family: currentLang === "ar" ? "Tajawal" : "Inter" } } }
-        }
-      }
-    });
-  }
-}
-
-// Render company-specific news log
+// Render company-specific news log with active hyperlinks
 function renderCompanyNewsList(stock) {
   const container = document.getElementById("company-news-list");
   container.innerHTML = "";
@@ -907,12 +1196,18 @@ function renderCompanyNewsList(stock) {
     meta.appendChild(src);
     meta.appendChild(time);
     
-    const title = document.createElement("h3");
-    title.className = "news-title";
-    title.textContent = currentLang === "ar" ? item.titleAr : item.titleEn;
+    // Active hyperlink redirection to news article
+    const titleLink = document.createElement("a");
+    titleLink.className = "news-title";
+    titleLink.href = item.url || "#";
+    titleLink.target = "_blank";
+    titleLink.rel = "noopener noreferrer";
+    titleLink.textContent = currentLang === "ar" ? item.titleAr : item.titleEn;
+    titleLink.style.textDecoration = "none";
+    titleLink.style.display = "block";
     
     div.appendChild(meta);
-    div.appendChild(title);
+    div.appendChild(titleLink);
     container.appendChild(div);
   });
 }
@@ -965,6 +1260,219 @@ function renderCustomizeSwitches(dict) {
   });
 }
 
+// Open the interactive historical modal drawers for metrics
+function openMetricModal(metricKey) {
+  const stock = stockData[currentCompanyId];
+  if (!stock || !stock.metricsHistory5Years) return;
+  
+  const dict = translations[currentLang];
+  const history = stock.metricsHistory5Years[metricKey];
+  const years = stock.metricsHistory5Years.years;
+  
+  if (!history) return;
+  
+  // Set title and details
+  const modalTitle = document.getElementById("modal-metric-title");
+  modalTitle.textContent = dict[`modal_${metricKey}_title`] || `${dict[metricKey].name} - 5-Year History`;
+  
+  const modalDesc = document.getElementById("modal-metric-desc");
+  modalDesc.textContent = dict[metricKey].desc;
+  
+  // Localized headers
+  document.getElementById("modal-th-year").textContent = dict.th_year_modal;
+  document.getElementById("modal-th-value").textContent = dict.th_val_modal;
+  document.getElementById("modal-th-change").textContent = dict.th_change_modal;
+  
+  // Build table with YoY calculation
+  const tbody = document.getElementById("modal-table").querySelector("tbody");
+  tbody.innerHTML = "";
+  
+  for (let i = 0; i < history.length; i++) {
+    const tr = document.createElement("tr");
+    
+    const tdYear = document.createElement("td");
+    tdYear.textContent = years[i];
+    
+    const tdVal = document.createElement("td");
+    // Format appropriately
+    let unit = "";
+    if (metricKey === "eps") unit = ` ${dict.unit_sar}`;
+    if (metricKey === "freeCashFlow") unit = ` ${dict.unit_billion}`;
+    if (metricKey === "netProfitMargin" || metricKey === "roe" || metricKey === "debtToAssets" || metricKey === "debtToEquity") unit = dict.unit_percent;
+    tdVal.textContent = history[i].toLocaleString(currentLang === 'ar' ? 'ar-EG' : 'en-US') + unit;
+    
+    const tdChange = document.createElement("td");
+    if (i === 0) {
+      tdChange.textContent = "—";
+      tdChange.style.color = "var(--text-light)";
+    } else {
+      const prev = history[i - 1];
+      const curr = history[i];
+      let yoy = 0;
+      
+      if (prev !== 0) {
+        yoy = ((curr - prev) / Math.abs(prev)) * 100;
+      }
+      
+      const formattedYoY = yoy.toFixed(1);
+      const sign = yoy > 0 ? "+" : "";
+      tdChange.textContent = `${sign}${formattedYoY}%`;
+      tdChange.style.fontWeight = "700";
+      
+      if (yoy > 0) {
+        tdChange.style.color = "var(--color-green)";
+      } else if (yoy < 0) {
+        tdChange.style.color = "var(--color-danger)";
+      } else {
+        tdChange.style.color = "var(--text-secondary)";
+      }
+    }
+    
+    tr.appendChild(tdYear);
+    tr.appendChild(tdVal);
+    tr.appendChild(tdChange);
+    tbody.appendChild(tr);
+  }
+  
+  // Render Modal Mini Chart
+  renderModalChart(years, history, dict[metricKey].name);
+  
+  // Show Modal
+  const modal = document.getElementById("metric-modal");
+  modal.style.display = "flex";
+  setTimeout(() => modal.classList.add("show"), 10);
+}
+
+// Close Interactive Modal
+function closeMetricModal() {
+  const modal = document.getElementById("metric-modal");
+  modal.classList.remove("show");
+  setTimeout(() => {
+    modal.style.display = "none";
+    if (currentModalChart) {
+      currentModalChart.destroy();
+      currentModalChart = null;
+    }
+  }, 300);
+}
+
+// Render line chart inside the interactive metric modal
+function renderModalChart(labels, data, labelName) {
+  const ctx = document.getElementById("modalMetricChart").getContext("2d");
+  
+  if (currentModalChart) {
+    currentModalChart.destroy();
+  }
+  
+  currentModalChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: labelName,
+        data: data,
+        backgroundColor: "rgba(4, 120, 87, 0.05)",
+        borderColor: "#047857", // Deep Green theme accent
+        borderWidth: 3,
+        pointBackgroundColor: "#1E3A8A", // Deep Blue points
+        pointBorderWidth: 2,
+        pointRadius: 6,
+        fill: true,
+        tension: 0.3
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: { grid: { color: "#F1F5F9" } },
+        x: { grid: { display: false } }
+      },
+      plugins: {
+        legend: { display: false }
+      }
+    }
+  });
+}
+
+// Async Fetch from Yahoo Finance via CORS proxy
+async function fetchYahooPrice(symbol) {
+  try {
+    const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}.SR`;
+    const corsProxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(yahooUrl)}`;
+    
+    const response = await fetch(corsProxyUrl);
+    if (!response.ok) throw new Error("CORS Proxy connectivity error");
+    
+    const json = await response.json();
+    const data = JSON.parse(json.contents);
+    const result = data.chart.result[0];
+    const price = result.meta.regularMarketPrice;
+    const prevClose = result.meta.previousClose;
+    const change = price - prevClose;
+    const changePercent = (change / prevClose) * 100;
+    
+    return { price, change, changePercent };
+  } catch (err) {
+    console.warn(`CORS/Fetch failed for ${symbol}. Using local simulation backup.`, err);
+    return null;
+  }
+}
+
+// Synchronize all stock prices dynamically from Saudi Tadawul (Yahoo Finance API client)
+async function syncAllPricesFromYahoo() {
+  triggerRandomLog(currentLang === "ar" ? "جاري الاتصال بخوادم الأسعار الفورية لتحديث المحفظة..." : "Querying realtime Tadawul feeds for Saudi stock prices...");
+  
+  let successCount = 0;
+  
+  // Display loader sync toast
+  showToast(
+    currentLang === "ar" ? "تكامل البيانات فوري" : "Live Price Integration",
+    currentLang === "ar" ? "جاري الاستعلام عن الأسعار اللحظية من خوادم تداول..." : "Fetching stock quote feeds from Saudi Capital Market indices..."
+  );
+
+  for (const symbol of Object.keys(stockData)) {
+    const liveData = await fetchYahooPrice(symbol);
+    if (liveData) {
+      const stock = stockData[symbol];
+      stock.price = parseFloat(liveData.price.toFixed(2));
+      stock.change = parseFloat(liveData.change.toFixed(2));
+      stock.changePercent = parseFloat(liveData.changePercent.toFixed(2));
+      
+      // Recalculate P/E dynamically: Price / EPS (only if EPS > 0)
+      if (stock.metrics.eps > 0) {
+        stock.metrics.pe = parseFloat((stock.price / stock.metrics.eps).toFixed(2));
+      }
+      successCount++;
+    }
+  }
+
+  // TASI change simulation
+  const tasiDiff = (Math.random() * 80 - 40);
+  marketSummary.tasi.value = parseFloat((marketSummary.tasi.value + tasiDiff).toFixed(2));
+  marketSummary.tasi.change = parseFloat((marketSummary.tasi.change + tasiDiff).toFixed(2));
+  marketSummary.tasi.changePercent = parseFloat(((marketSummary.tasi.change / marketSummary.tasi.value) * 100).toFixed(2));
+
+  // Reset timers
+  priceTimerSeconds = 60;
+  newsTimerSeconds = 60;
+
+  if (successCount > 0) {
+    updateUI();
+    showToast(
+      currentLang === "ar" ? "اكتمل التحديث" : "Update Completed",
+      currentLang === "ar" ? `تم تحديث أسعار ${successCount} شركات مباشرة من السوق المالية السعودية.` : `Successfully synchronized live prices for ${successCount} companies.`
+    );
+  } else {
+    // Local mock simulation fallback
+    simulatePriceUpdate();
+    showToast(
+      currentLang === "ar" ? "المزامنة المحلية" : "Local Sync Run",
+      currentLang === "ar" ? "تعذر الاستجابة من الملقم الخارجي؛ تم تشغيل المعالجة التقديرية للأسعار." : "Could not connect to external API; local mock pricing engine has run."
+    );
+  }
+}
+
 // Show a temporary visual Toast alert
 function showToast(title, message) {
   const toast = document.getElementById("toast-notif");
@@ -981,6 +1489,7 @@ function showToast(title, message) {
 // Update live header notification tickers
 function triggerRandomLog(message) {
   const textEl = document.getElementById("live-notif-text");
+  if (!textEl) return;
   textEl.style.opacity = 0;
   setTimeout(() => {
     textEl.textContent = message;
@@ -990,19 +1499,17 @@ function triggerRandomLog(message) {
 
 // Start simulation clocks countdown
 function startSimulationTimers() {
-  // Countdown timers loop
   setInterval(() => {
     // Price countdown timer
     priceTimerSeconds--;
     if (priceTimerSeconds <= 0) {
-      priceTimerSeconds = 6 * 60 * 60; // reset
-      simulatePriceUpdate();
+      syncAllPricesFromYahoo();
     }
     
     // News countdown timer
     newsTimerSeconds--;
     if (newsTimerSeconds <= 0) {
-      newsTimerSeconds = 60 * 60; // reset
+      newsTimerSeconds = 60; // reset
       simulateNewsUpdate();
     }
     
@@ -1011,7 +1518,7 @@ function startSimulationTimers() {
     document.getElementById("news-timer").textContent = formatTime(newsTimerSeconds);
   }, 1000);
 
-  // Periodic visual simulation inputs (every 30 seconds, push a notification)
+  // Periodic visual simulation inputs
   setInterval(() => {
     const logs = currentLang === "ar" ? [
       "تحديث: أرامكو تعلن عن نتائج الربع الثاني لعام 2026 بنمو في الأرباح التشغيلية.",
@@ -1038,30 +1545,8 @@ function formatTime(totalSeconds) {
   return `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 }
 
-// Force a manual instant recalculation & synchronization
-function triggerManualSync() {
-  showToast(
-    currentLang === "ar" ? "تكامل البيانات فوري" : "Instant Sync Started",
-    currentLang === "ar" ? "جاري الاتصال بقاعدة بيانات تداول وأرقام لتحديث الأسعار والمؤشرات..." : "Connecting to Tadawul & Argaam feeds to update stock charts..."
-  );
-  
-  priceTimerSeconds = 6 * 60 * 60; // reset price countdown timer
-  newsTimerSeconds = 60 * 60; // reset news countdown timer
-  
-  setTimeout(() => {
-    simulatePriceUpdate();
-    simulateNewsUpdate();
-    
-    showToast(
-      currentLang === "ar" ? "اكتمل التحديث" : "Update Completed",
-      currentLang === "ar" ? "تم تحديث جميع أسعار الأسهم والمؤشرات والأخبار المعنية." : "All stock prices, metrics, and news items updated to the latest values."
-    );
-  }, 1000);
-}
-
 // Simulate hourly news feed injection
 function simulateNewsUpdate() {
-  // Take a random item from newsDatabase and prepend to current active company
   const randomNews = newsDatabase[Math.floor(Math.random() * newsDatabase.length)];
   const targetStock = stockData[randomNews.companyId];
   
@@ -1073,12 +1558,12 @@ function simulateNewsUpdate() {
         date: currentLang === "ar" ? "الآن" : "Just now",
         titleAr: randomNews.titleAr,
         titleEn: randomNews.titleEn,
-        source: randomNews.source
+        source: randomNews.source,
+        url: randomNews.url
       });
       
       newNewsAlertsCount++;
       
-      // Update badging on Sidebar News Item if not on news view
       if (activeTab !== "news") {
         const badge = document.getElementById("news-badge-count");
         badge.textContent = newNewsAlertsCount;
@@ -1094,31 +1579,22 @@ function simulateNewsUpdate() {
   }
 }
 
-// Simulate stock price adjustments every 6 hours (or sync trigger)
+// Local mock stock price adjustments fallback
 function simulatePriceUpdate() {
-  // Randomize all stock prices slightly (+/- 0.5%) and calculate PE Ratio
   Object.keys(stockData).forEach(symbol => {
     const stock = stockData[symbol];
-    const percentage = (Math.random() * 1.0 - 0.5) / 100; // -0.5% to +0.5%
+    const percentage = (Math.random() * 0.8 - 0.4) / 100; // -0.4% to +0.4%
     const diff = stock.price * percentage;
     
     stock.price = parseFloat((stock.price + diff).toFixed(2));
     stock.change = parseFloat((stock.change + diff).toFixed(2));
     stock.changePercent = parseFloat(((stock.change / (stock.price - stock.change)) * 100).toFixed(2));
     
-    // Recalculate P/E ratio: Price / EPS (only if EPS > 0)
     if (stock.metrics.eps > 0) {
       stock.metrics.pe = parseFloat((stock.price / stock.metrics.eps).toFixed(2));
     }
   });
   
-  // TASI change
-  const tasiDiff = (Math.random() * 100 - 50);
-  marketSummary.tasi.value = parseFloat((marketSummary.tasi.value + tasiDiff).toFixed(2));
-  marketSummary.tasi.change = parseFloat((marketSummary.tasi.change + tasiDiff).toFixed(2));
-  marketSummary.tasi.changePercent = parseFloat(((marketSummary.tasi.change / marketSummary.tasi.value) * 100).toFixed(2));
-  
   updateUI();
-  
   triggerRandomLog(currentLang === "ar" ? "تم تحديث أسعار الأسهم وإعادة احتساب مكررات الربحية." : "Stock price values refreshed and P/E ratios re-evaluated.");
 }
