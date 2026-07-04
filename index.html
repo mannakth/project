@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTY<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
@@ -222,7 +222,14 @@
       <div id="tab-history5" class="tab-content">
         <div class="card-white">
           <div class="card-header">
-            <h2 data-key="history5_title">البيانات المالية التاريخية (آخر 5 سنوات)</h2>
+            <div class="header-main-title">
+              <h2 data-key="history5_title" style="margin-bottom: 4px;">البيانات المالية التاريخية (آخر 5 سنوات)</h2>
+              <!-- Period toggle -->
+              <div class="granularity-toggles" style="display: inline-flex; gap: 4px; background-color: var(--bg-accent); padding: 4px; border-radius: var(--radius-md);">
+                <button class="toggle-btn-gran active" data-granularity="annual" data-key="btn_annual" style="background: none; border: none; padding: 6px 12px; font-family: inherit; font-size: 11px; font-weight: 700; border-radius: var(--radius-sm); color: var(--text-secondary); cursor: pointer; transition: var(--transition);">سنوي</button>
+                <button class="toggle-btn-gran" data-granularity="quarterly" data-key="btn_quarterly" style="background: none; border: none; padding: 6px 12px; font-family: inherit; font-size: 11px; font-weight: 700; border-radius: var(--radius-sm); color: var(--text-secondary); cursor: pointer; transition: var(--transition);">ربع سنوي</button>
+              </div>
+            </div>
             <div class="chart-toggles">
               <button class="toggle-btn active" data-chart-metric="revenues" data-key="btn_rev">الإيرادات</button>
               <button class="toggle-btn" data-chart-metric="netIncome" data-key="btn_ni">صافي الدخل</button>
@@ -346,6 +353,36 @@
     </main>
   </div>
   
+  <!-- Interactive Metric History Modal -->
+  <div id="metric-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-card">
+      <button class="modal-close" id="modal-close-btn">&times;</button>
+      <div class="modal-header">
+        <h3 id="modal-metric-title">تاريخ مؤشر ربحية السهم (EPS)</h3>
+        <p class="sub-text" id="modal-metric-desc">التطور التاريخي ونسبة النمو السنوي</p>
+      </div>
+      <div class="modal-body">
+        <div class="modal-chart-container">
+          <canvas id="modalMetricChart"></canvas>
+        </div>
+        <div class="table-responsive">
+          <table class="financial-table" id="modal-table">
+            <thead>
+              <tr>
+                <th id="modal-th-year">السنة المالية</th>
+                <th id="modal-th-value">القيمة</th>
+                <th id="modal-th-change">نسبة النمو السنوي (YoY)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Loaded dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Custom interactive toast notification -->
   <div id="toast-notif" class="toast-container">
     <div class="toast-body">
@@ -360,3 +397,4 @@
   <script src="app.js"></script>
 </body>
 </html>
+PE html>
