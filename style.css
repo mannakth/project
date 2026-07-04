@@ -8,11 +8,11 @@
   --bg-accent: #F1F5F9;
   
   /* Brand colors */
-  --color-green: #00875A;
-  --color-green-hover: #00704A;
+  --color-green: #047857;
+  --color-green-hover: #065F46;
   --color-green-bg: #E6F4EA;
   --color-blue-dark: #0F172A;
-  --color-blue-card: #1E293B;
+  --color-blue-card: #1E3A8A;
   --color-border: #E2E8F0;
   
   /* Text colors */
@@ -1323,4 +1323,99 @@ input:checked + .slider:before {
     align-items: flex-start;
     text-align: left;
   }
+}
+
+/* Modal overlay styling */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.modal-overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.modal-card {
+  background-color: white;
+  border-radius: var(--radius-lg);
+  width: 90%;
+  max-width: 680px;
+  padding: 24px;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--color-border);
+  position: relative;
+  transform: translateY(20px);
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.modal-overlay.show .modal-card {
+  transform: translateY(0);
+}
+.modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  cursor: pointer;
+  line-height: 1;
+}
+[dir="rtl"] .modal-close {
+  right: auto;
+  left: 16px;
+}
+.modal-close:hover {
+  color: var(--color-danger);
+}
+.modal-header {
+  margin-bottom: 20px;
+}
+.modal-header h3 {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--color-blue-dark);
+}
+.modal-chart-container {
+  position: relative;
+  height: 240px;
+  width: 100%;
+  margin-bottom: 20px;
+}
+.metric-card {
+  cursor: pointer;
+}
+.metric-info-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-light);
+  cursor: pointer;
+  transition: var(--transition);
+}
+.metric-info-trigger:hover {
+  color: var(--color-green);
+  transform: scale(1.1);
+}
+
+/* Extra toggle btn for granularity */
+.toggle-btn-gran {
+  transition: var(--transition);
+}
+.toggle-btn-gran.active {
+  background-color: white !important;
+  color: var(--color-green) !important;
+  box-shadow: var(--shadow-sm);
 }
