@@ -17,7 +17,7 @@ const stockData = {
       roe: 28.2,
       debtToAssets: 18.4,
       debtToEquity: 22.1,
-      freeCashFlow: 382.4, // in Billions SAR
+      freeCashFlow: 1.74, // in SAR per share (382.4B FCF / 220B shares)
     },
     metricsHistory5Years: {
       years: ["2021", "2022", "2023", "2024", "2025"],
@@ -26,7 +26,7 @@ const stockData = {
       roe: [25.4, 32.8, 28.5, 28.0, 28.2],
       debtToAssets: [20.5, 18.9, 17.5, 18.0, 18.4],
       debtToEquity: [24.5, 22.8, 20.8, 21.5, 22.1],
-      freeCashFlow: [320.5, 412.8, 380.2, 370.5, 382.4]
+      freeCashFlow: [1.46, 1.88, 1.73, 1.68, 1.74]
     },
     history5Years: {
       years: ["2021", "2022", "2023", "2024", "2025"],
@@ -60,10 +60,15 @@ const stockData = {
       eps: [0.46, 0.51, 0.49, 0.53, 0.44, 0.48, 0.47, 0.48]
     },
     news: [
-      { id: 1, date: "قبل ساعة واحدة", titleAr: "أرامكو توقع اتفاقية شراكة استراتيجية لتوسعة وتطوير البنية التحتية للطاقة النظيفة", titleEn: "Aramco signs strategic partnership agreement to expand clean energy infrastructure", source: "تداول السعودية", url: "https://www.tadawul.com.sa/wps/portal/tadawul/home/market-reports-publications/corporate-news" },
-      { id: 2, date: "قبل 3 ساعات", titleAr: "أرامكو السعودية تعلن عن توزيع الأرباح النقدية للمساهمين عن الربع الأول من عام 2026", titleEn: "Saudi Aramco announces cash dividend distribution for Q1 2026", source: "أرقام", url: "https://www.argaam.com/ar/company/companyoverview/marketid/3/companyid/3509" },
-      { id: 3, date: "قبل 6 ساعات", titleAr: "هيئة السوق المالية توافق على زيادة رأس مال شركات تابعة لأرامكو السعودية", titleEn: "CMA approves capital increase for Saudi Aramco subsidiaries", source: "هيئة السوق المالية", url: "https://www.cma.org.sa" },
-      { id: 4, date: "قبل يوم واحد", titleAr: "تقرير خاص: أثر ارتفاع أسعار النفط العالمية على ربحية أرامكو في النصف الأول", titleEn: "Special Report: Impact of global oil prices on Aramco's H1 profitability", source: "أرقام", url: "https://www.argaam.com" }
+      { id: 1, date: "قبل ساعة واحدة", titleAr: "أرامكو توقع اتفاقية شراكة استراتيجية لتوسعة وتطوير البنية التحتية للطاقة النظيفة", titleEn: "Aramco signs strategic partnership agreement to expand clean energy infrastructure", source: "تداول السعودية", url: "https://www.tadawul.com.sa/wps/portal/tadawul/home/market-reports-publications/corporate-news/!ut/p/z1/pdDBCsIwEATQb_ELstnElno0iFqiiKKepLchGqglpElb8fet4M2bO8PMYwYEFEDF11qKauq4KveeZbsXh90xiK8wT-MhicMk-YrjPZ0Xm4cQIP0fQP4GjwH__hsgP_0jPqCgEqK-5kXdc-k59_T2vG-5zK0l-qj6Bss5V7aqaVfVtbZl5Z827Kk0Xg!!" },
+      { id: 2, date: "قبل 3 ساعات", titleAr: "أرامكو السعودية تعلن عن توزيع الأرباح النقدية للمساهمين عن الربع الأول من عام 2026", titleEn: "Saudi Aramco announces cash dividend distribution for Q1 2026", source: "أرقام", url: "https://www.argaam.com/ar/company/companyoverview/marketid/3/companyid/3509/%D8%A3%D8%B1%D8%A7%D9%85%D9%83%D9%88-%D8%A7%D9%84%D8%B3%D8%B9%D9%88%D8%AF%D9%8A%D8%A9" },
+      { id: 3, date: "قبل 6 ساعات", titleAr: "هيئة السوق المالية توافق على زيادة رأس مال شركات تابعة لأرامكو السعودية", titleEn: "CMA approves capital increase for Saudi Aramco subsidiaries", source: "هيئة السوق المالية", url: "https://www.cma.org.sa/Market/News/Pages/default.aspx" },
+      { id: 4, date: "قبل يوم واحد", titleAr: "تقرير خاص: أثر ارتفاع أسعار النفط العالمية على ربحية أرامكو في النصف الأول", titleEn: "Special Report: Impact of global oil prices on Aramco's H1 profitability", source: "أرقام", url: "https://www.argaam.com/ar/financial-reports" }
+    ],
+    reports: [
+      { year: "2025", titleAr: "التقرير السنوي المتكامل لشركة أرامكو السعودية لعام 2025", titleEn: "Saudi Aramco Integrated Annual Report 2025", type: "PDF", url: "https://www.saudiaramco.com/-/media/publications/corporate-reports/saudi-aramco-ara-2025-arabic.pdf" },
+      { year: "2025", titleAr: "القوائم المالية المدققة لعام 2025", titleEn: "Audited Financial Statements 2025", type: "PDF", url: "https://www.saudiaramco.com/-/media/publications/corporate-reports/saudi-aramco-afs-2025-arabic.pdf" },
+      { year: "2024", titleAr: "التقرير السنوي لشركة أرامكو السعودية لعام 2024", titleEn: "Saudi Aramco Annual Report 2024", type: "PDF", url: "https://www.saudiaramco.com/-/media/publications/corporate-reports/saudi-aramco-ara-2024-arabic.pdf" }
     ]
   },
   "1120": {
@@ -84,7 +89,7 @@ const stockData = {
       roe: 21.8,
       debtToAssets: 78.5,
       debtToEquity: 360.2,
-      freeCashFlow: 24.8,
+      freeCashFlow: 6.20, // in SAR per share (24.8B FCF / 4B shares)
     },
     metricsHistory5Years: {
       years: ["2021", "2022", "2023", "2024", "2025"],
@@ -93,7 +98,7 @@ const stockData = {
       roe: [20.5, 22.4, 21.0, 21.5, 21.8],
       debtToAssets: [75.2, 77.8, 78.0, 78.2, 78.5],
       debtToEquity: [320.5, 350.2, 355.0, 358.5, 360.2],
-      freeCashFlow: [18.2, 22.5, 20.8, 23.4, 24.8]
+      freeCashFlow: [4.55, 5.63, 5.20, 5.85, 6.20]
     },
     history5Years: {
       years: ["2021", "2022", "2023", "2024", "2025"],
@@ -125,9 +130,12 @@ const stockData = {
       eps: [0.85, 0.90, 0.94, 1.02, 0.98, 1.02, 1.04, 1.11]
     },
     news: [
-      { id: 1, date: "قبل ساعتين", titleAr: "مصرف الراجحي يفتتح فرعاً رقمياً متكاملاً هو الأكبر في المنطقة الشرقية", titleEn: "Al Rajhi Bank opens its largest digital branch in the Eastern Province", source: "أرقام", url: "https://www.argaam.com/ar/company/companyoverview/marketid/3/companyid/30" },
-      { id: 2, date: "قبل 4 ساعات", titleAr: "تحديث من هيئة السوق المالية بخصوص زيادة ملكية المؤسسات في مصرف الراجحي", titleEn: "CMA update on institutional ownership increase in Al Rajhi Bank", source: "هيئة السوق المالية", url: "https://www.cma.org.sa" },
+      { id: 1, date: "قبل ساعتين", titleAr: "مصرف الراجحي يفتتح فرعاً رقمياً متكاملاً هو الأكبر في المنطقة الشرقية", titleEn: "Al Rajhi Bank opens its largest digital branch in the Eastern Province", source: "أرقام", url: "https://www.argaam.com/ar/company/companyoverview/marketid/3/companyid/30/%D9%85%D8%B5%D8%B1%D9%81-%D8%A7%D9%84%D8%B1%D8%A7%D8%AC%D8%AD%D9%8A" },
+      { id: 2, date: "قبل 4 ساعات", titleAr: "تحديث من هيئة السوق المالية بخصوص زيادة ملكية المؤسسات في مصرف الراجحي", titleEn: "CMA update on institutional ownership increase in Al Rajhi Bank", source: "هيئة السوق المالية", url: "https://www.cma.org.sa/Market/News/Pages/default.aspx" },
       { id: 3, date: "قبل يوم واحد", titleAr: "مصرف الراجحي يحصد جائزة أفضل مصرف في الخدمات المصرفية للأفراد بالمملكة", titleEn: "Al Rajhi Bank wins Best Retail Bank in Saudi Arabia award", source: "تداول السعودية", url: "https://www.tadawul.com.sa" }
+    ],
+    reports: [
+      { year: "2025", titleAr: "تقرير مجلس الإدارة والقوائم المالية لمصرف الراجحي لعام 2025", titleEn: "Al Rajhi Bank Board Report & Financial Statements 2025", type: "PDF", url: "https://www.alrajhibank.com.sa/-/media/Project/Alrajhi-Corporate/Alrajhi-Global/Publications/Annual-Reports/Arabic/Annual-Report-2025.pdf" }
     ]
   },
   "2010": {
@@ -148,7 +156,7 @@ const stockData = {
       roe: 7.5,
       debtToAssets: 24.1,
       debtToEquity: 34.6,
-      freeCashFlow: 15.2,
+      freeCashFlow: 5.07, // in SAR per share (15.2B FCF / 3B shares)
     },
     metricsHistory5Years: {
       years: ["2021", "2022", "2023", "2024", "2025"],
@@ -157,7 +165,7 @@ const stockData = {
       roe: [11.0, 7.9, -1.3, 4.2, 7.5],
       debtToAssets: [34.5, 33.6, 32.2, 30.3, 24.1],
       debtToEquity: [52.8, 50.7, 47.5, 43.5, 34.6],
-      freeCashFlow: [32.5, 28.6, 12.1, 14.8, 15.2]
+      freeCashFlow: [10.83, 9.53, 4.03, 4.93, 5.07]
     },
     history5Years: {
       years: ["2021", "2022", "2023", "2024", "2025"],
@@ -190,8 +198,11 @@ const stockData = {
     },
     news: [
       { id: 1, date: "قبل 45 دقيقة", titleAr: "سابك تعلن عن إطلاق مشروع بولي إيثيلين منخفض الكثافة ومستدام محلياً", titleEn: "SABIC announces the launch of a sustainable low-density polyethylene project locally", source: "تداول السعودية", url: "https://www.tadawul.com.sa/wps/portal/tadawul/home/market-reports-publications/corporate-news" },
-      { id: 2, date: "قبل 5 ساعات", titleAr: "دراسة أرقام: تحسن هوامش ربحية قطاع البتروكيماويات يمنح سابك دفعة تنافسية", titleEn: "Argaam study: Improved petrochemical margins give SABIC a competitive boost", source: "أرقام", url: "https://www.argaam.com/ar/company/companyoverview/marketid/3/companyid/79" },
+      { id: 2, date: "قبل 5 ساعات", titleAr: "دراسة أرقام: تحسن هوامش ربحية قطاع البتروكيماويات يمنح سابك دفعة تنافسية", titleEn: "Argaam study: Improved petrochemical margins give SABIC a competitive boost", source: "أرقام", url: "https://www.argaam.com/ar/company/companyoverview/marketid/3/companyid/79/%D8%B3%D8%A7%D8%A8%D9%83" },
       { id: 3, date: "قبل يومين", titleAr: "سابك تعين رئيساً تنفيذياً جديداً لشركة تابعة لها في أوروبا لتسريع إعادة الهيكلة", titleEn: "SABIC appoints new CEO for European subsidiary to accelerate restructuring", source: "أرقام", url: "https://www.argaam.com" }
+    ],
+    reports: [
+      { year: "2025", titleAr: "التقرير السنوي لشركة سابك لعام 2025", titleEn: "SABIC Annual Report 2025", type: "PDF", url: "https://www.sabic.com/assets/ar/Images/SABIC-Annual-Report-2025-AR_tcm10-23420.pdf" }
     ]
   },
   "7010": {
@@ -212,7 +223,7 @@ const stockData = {
       roe: 19.8,
       debtToAssets: 32.5,
       debtToEquity: 62.1,
-      freeCashFlow: 11.8,
+      freeCashFlow: 2.36, // in SAR per share (11.8B FCF / 5B shares)
     },
     metricsHistory5Years: {
       years: ["2021", "2022", "2023", "2024", "2025"],
@@ -221,7 +232,7 @@ const stockData = {
       roe: [17.3, 16.7, 17.0, 15.8, 19.8],
       debtToAssets: [28.5, 30.2, 31.4, 32.0, 32.5],
       debtToEquity: [52.4, 55.6, 58.1, 60.2, 62.1],
-      freeCashFlow: [8.9, 10.2, 11.5, 10.9, 11.8]
+      freeCashFlow: [1.78, 2.04, 2.30, 2.18, 2.36]
     },
     history5Years: {
       years: ["2021", "2022", "2023", "2024", "2025"],
@@ -256,8 +267,11 @@ const stockData = {
     },
     news: [
       { id: 1, date: "قبل 15 دقيقة", titleAr: "إس تي سي باي تعلن عن ترقية رخصتها المصرفية رسمياً لبدء عمليات البنك الرقمي", titleEn: "stc pay announces official upgrade of banking license to launch digital bank", source: "تداول السعودية", url: "https://www.tadawul.com.sa/wps/portal/tadawul/home/market-reports-publications/corporate-news" },
-      { id: 2, date: "قبل 5 ساعات", titleAr: "اس تي سي توقع اتفاقية لتزويد مدينة نيوم بأحدث تقنيات الاتصال بالجيل الخامس المتقدم", titleEn: "stc signs agreement to provide NEOM with advanced 5G connectivity technology", source: "أرقام", url: "https://www.argaam.com/ar/company/companyoverview/marketid/3/companyid/31" },
+      { id: 2, date: "قبل 5 ساعات", titleAr: "اس تي سي توقع اتفاقية لتزويد مدينة نيوم بأحدث تقنيات الاتصال بالجيل الخامس المتقدم", titleEn: "stc signs agreement to provide NEOM with advanced 5G connectivity technology", source: "أرقام", url: "https://www.argaam.com/ar/company/companyoverview/marketid/3/companyid/31/%D8%A7%D9%84%D8%A7%D8%AA%D8%B5%D8%A7%D9%84%D8%A7%D8%AA-%D8%A7%D9%84%D8%B3%D8%B9%D9%88%D8%AF%D9%8A%D9%8A%D8%A9" },
       { id: 3, date: "قبل 12 ساعة", titleAr: "تداولات مطلع الأسبوع: سهم stc يستقطب سيولة قوية تدفعه لتجاوز مستوياته السابقة", titleEn: "Early week trading: stc stock attracts strong liquidity pushing it past former levels", source: "أرقام", url: "https://www.argaam.com" }
+    ],
+    reports: [
+      { year: "2025", titleAr: "تقرير الاستدامة والتقرير السنوي لشركة stc لعام 2025", titleEn: "stc Sustainability & Annual Report 2025", type: "PDF", url: "https://www.stc.com.sa/content/dam/stc/documents/annual-reports/stc-Annual-Report-2025-Ar.pdf" }
     ]
   },
   "1180": {
@@ -278,7 +292,7 @@ const stockData = {
       roe: 14.8,
       debtToAssets: 81.2,
       debtToEquity: 432.1,
-      freeCashFlow: 18.5,
+      freeCashFlow: 3.08, // in SAR per share (18.5B FCF / 6B shares)
     },
     metricsHistory5Years: {
       years: ["2021", "2022", "2023", "2024", "2025"],
@@ -287,7 +301,7 @@ const stockData = {
       roe: [12.4, 15.6, 15.0, 14.5, 14.8],
       debtToAssets: [78.2, 80.5, 81.0, 81.1, 81.2],
       debtToEquity: [385.0, 410.5, 425.0, 428.1, 432.1],
-      freeCashFlow: [12.5, 15.6, 17.0, 17.5, 18.5]
+      freeCashFlow: [2.08, 2.60, 2.83, 2.92, 3.08]
     },
     history5Years: {
       years: ["2021", "2022", "2023", "2024", "2025"],
@@ -319,8 +333,11 @@ const stockData = {
       eps: [0.75, 0.77, 0.81, 0.92, 0.79, 0.82, 0.84, 0.90]
     },
     news: [
-      { id: 1, date: "قبل ساعة", titleAr: "الأهلي السعودي يطلق برنامج تمويل عقاري تنافسي مخصص للمستفيدين من سكني", titleEn: "SNB launches competitive mortgage program for Sakani beneficiaries", source: "أرقام", url: "https://www.argaam.com/ar/company/companyoverview/marketid/3/companyid/40" },
+      { id: 1, date: "قبل ساعة", titleAr: "الأهلي السعودي يطلق برنامج تمويل عقاري تنافسي مخصص للمستفيدين من سكني", titleEn: "SNB launches competitive mortgage program for Sakani beneficiaries", source: "أرقام", url: "https://www.argaam.com/ar/company/companyoverview/marketid/3/companyid/40/%D8%A7%D9%84%D8%A8%D9%86%D9%83-%D8%A7%D9%84%D8%A3%D9%87%D9%84%D9%8A-%D8%A7%D9%84%D8%B3%D8%B9%D9%88%D8%AF%D9%8A" },
       { id: 2, date: "قبل 8 ساعات", titleAr: "إعلان البنك الأهلي السعودي عن نتائج تصويت الجمعية العامة غير العادية وتوزيع الأرباح", titleEn: "SNB announces results of EGM voting and dividend distribution", source: "تداول السعودية", url: "https://www.tadawul.com.sa/wps/portal/tadawul/home/market-reports-publications/corporate-news" }
+    ],
+    reports: [
+      { year: "2025", titleAr: "التقرير السنوي المتكامل للبنك الأهلي السعودي لعام 2025", titleEn: "SNB Integrated Annual Report 2025", type: "PDF", url: "https://www.lahli.com/en-us/investor-relations/Documents/SNB-Annual-Report-2025-En.pdf" }
     ]
   },
   "2082": {
@@ -341,7 +358,7 @@ const stockData = {
       roe: 8.6,
       debtToAssets: 68.2,
       debtToEquity: 215.4,
-      freeCashFlow: -4.8,
+      freeCashFlow: -6.58, // in SAR per share (-4.8B FCF / 0.73B shares)
     },
     metricsHistory5Years: {
       years: ["2021", "2022", "2023", "2024", "2025"],
@@ -350,7 +367,7 @@ const stockData = {
       roe: [5.8, 10.1, 9.9, 8.7, 8.6],
       debtToAssets: [71.0, 68.5, 67.5, 68.0, 68.2],
       debtToEquity: [245.0, 216.8, 224.5, 223.3, 215.4],
-      freeCashFlow: [2.5, -1.2, -3.8, -4.5, -4.8]
+      freeCashFlow: [3.42, -1.64, -5.21, -6.16, -6.58]
     },
     history5Years: {
       years: ["2021", "2022", "2023", "2024", "2025"],
@@ -382,7 +399,10 @@ const stockData = {
     news: [
       { id: 1, date: "قبل 30 دقيقة", titleAr: "أكوا باور تبدأ التشغيل التجاري لمشروع الطاقة الشمسية بقدرة 500 ميجاوات في دبي", titleEn: "ACWA Power starts commercial operations of a 500MW solar project in Dubai", source: "تداول السعودية", url: "https://www.tadawul.com.sa/wps/portal/tadawul/home/market-reports-publications/corporate-news" },
       { id: 2, date: "قبل ساعتين", titleAr: "أكوا باور توقع اتفاقية لشراء وتطوير محطات طاقة متجددة في آسيا بقيمة 2 مليار دولار", titleEn: "ACWA Power signs agreement to purchase and develop renewable plants in Asia worth $2B", source: "تداول السعودية", url: "https://www.tadawul.com.sa" },
-      { id: 3, date: "قبل 9 ساعات", titleAr: "تقرير تحليل فني لـ أرقام: سهم أكوا باور يخترق مستويات مقاومة هامة وسط تدفق استثماري أجنبي", titleEn: "Argaam Technical Report: ACWA Power stock breaks resistance levels amid foreign inflows", source: "أرقام", url: "https://www.argaam.com/ar/company/companyoverview/marketid/3/companyid/13247" }
+      { id: 3, date: "قبل 9 ساعات", titleAr: "تقرير تحليل فـني لـ أرقام: سهم أكوا باور يخترق مستويات مقاومة هامة وسط تدفق استثماري أجنبي", titleEn: "Argaam Technical Report: ACWA Power stock breaks resistance levels amid foreign inflows", source: "أرقام", url: "https://www.argaam.com/ar/company/companyoverview/marketid/3/companyid/13247/%D8%A3%D9%83%D9%88%D8%A7-%D8%A8%D8%A7%D9%88%D8%B1" }
+    ],
+    reports: [
+      { year: "2025", titleAr: "التقرير السنوي المتكامل لشركة أكوا باور لعام 2025", titleEn: "ACWA Power Integrated Annual Report 2025", type: "PDF", url: "https://www.acwapower.com/media/publications/reports/acwa-power-annual-report-2025-ar.pdf" }
     ]
   }
 };
@@ -392,17 +412,17 @@ const marketSummary = {
     value: 11842.10,
     change: 45.30,
     changePercent: 0.38,
-    status: "CLOSED", // default
+    status: "CLOSED",
     liquidity: "5.8 مليار ر.س",
     volume: "235 مليون سهم",
     trades: "412,000 صفقة"
   },
   sectorAverages: {
-    "الطاقة": { pe: 16.8, roe: 25.5, npm: 24.8 },
-    "الخدمات المالية والبنوك": { pe: 18.2, roe: 18.4, npm: 42.1 },
-    "المواد الأساسية": { pe: 22.4, roe: 9.8, npm: 8.5 },
-    "الاتصالات": { pe: 15.6, roe: 18.2, npm: 17.5 },
-    "المرافق الخدمية": { pe: 85.0, roe: 7.2, npm: 19.8 }
+    "الطاقة": { pe: 16.8, roe: 25.5, npm: 24.8, debtToAssets: 20.0, debtToEquity: 25.0, freeCashFlow: 1.50 },
+    "الخدمات المالية والبنوك": { pe: 18.2, roe: 18.4, npm: 42.1, debtToAssets: 80.0, debtToEquity: 400.0, freeCashFlow: 5.50 },
+    "المواد الأساسية": { pe: 22.4, roe: 9.8, npm: 8.5, debtToAssets: 30.0, debtToEquity: 45.0, freeCashFlow: 4.50 },
+    "الاتصالات": { pe: 15.6, roe: 18.2, npm: 17.5, debtToAssets: 31.0, debtToEquity: 60.0, freeCashFlow: 2.10 },
+    "المرافق الخدمية": { pe: 85.0, roe: 7.2, npm: 19.8, debtToAssets: 65.0, debtToEquity: 210.0, freeCashFlow: -5.00 }
   }
 };
 
@@ -412,5 +432,3 @@ const newsDatabase = [
   { companyId: "2010", date: "منذ 40 دقيقة", titleAr: "سابك تعود للربحية القوية في تقرير الربع الأول وتتخطى تقديرات المحللين", titleEn: "SABIC returns to profitability in Q1 report, exceeding analyst estimates", source: "هيئة السوق المالية", url: "https://www.cma.org.sa" },
   { companyId: "7010", date: "منذ 50 دقيقة", titleAr: "إس تي سي تختبر بنجاح أول شبكة اتصال فضائي مباشر للهواتف المحمولة في المملكة", titleEn: "stc successfully tests first direct satellite-to-mobile network in KSA", source: "أرقام", url: "https://www.argaam.com" }
 ];
-
-  
